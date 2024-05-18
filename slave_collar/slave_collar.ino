@@ -1,12 +1,16 @@
-#IGT Development production
-#Version-0.2.0
+//IGT Development production
+//Version-0.3.0
 
-const int greenLedPin = 13;
-const int redLedPin = 12;
-const int speakerPin = 11;
-const int buttonPin = 10;
-const int gearconPin = 9;
+const int greenLedPin = 2;
+const int redLedPin = 3;
+const int buttonPin = 4;
+const int gearconPin = 5;
+const int speakerPin = 6;
 bool mode = true;
+bool greenLedState = true;
+bool redLedState = false;
+int time = 0;
+bool timeIsOver = false;
 byte track = 0;
 float carma = 0;
 
@@ -19,30 +23,37 @@ void setup() {
 }
 
 void loop() {
-  if (digitalRead(gearconPin) == HIGH) {
+  digitalWrite(redLedPin, HIGH);
+  if ((digitalRead(gearconPin) == LOW) && !timeIsOver) {
+    delay(3000);
     destiny(mode);
+    timeIsOver = !timeIsOver;
+    time = 0;
+    delay(2000);
   }
-  if (digitalRead(gearconPin) == LOW ) {
+  if (digitalRead(gearconPin) == HIGH ) {
     if (mode == true) {
-      digitalWrite(greenLedPin, HIGH);
-      delay(200);
       digitalWrite(greenLedPin, LOW);
-      delay(1000);
+      delay(100);
+      digitalWrite(greenLedPin, HIGH);
+      delay(100);
     } else if (mode == false) {
-      digitalWrite(redLedPin, HIGH);
-      delay(200);
       digitalWrite(redLedPin, LOW);
-      delay(1000);
+      delay(100);
+      digitalWrite(redLedPin, HIGH);
+      delay(100);
     }
 
-    if (digitalRead(buttonPin) == HIGH) {
+    if (digitalRead(buttonPin) == LOW) {
       mode = !mode;
       if (mode){
         voice(3);
       } else {
         voice(2);
       }
+      delay(1000);
     }
+    timeIsOver = !timeIsOver;
   }
 }
 
@@ -52,41 +63,49 @@ void destiny(bool lucky) {
   } else {
     track = 0;
   }
-  digitalWrite(redLedPin, HIGH);
+  digitalWrite(greenLedPin, HIGH);
+  digitalWrite(redLedPin, LOW);
   voice(6);
-  for (int i = 0; i < 3600000; i += 500) {
-    delay(500);
-    if (digitalRead(gearconPin) == LOW) {
-      Track = 0;
-      break;
+  do {
+    delay(1000);
+    time+=1;
+    time = hitry(time);
+    if (digitalRead(buttonPin) == LOW) {
+      carma += 1;
+      if (carma == 5) {
+        voice(1);
+        return;
+        }
+      }
+    if (time == 6) {
+      voice(50);
+    } else if (time == 12) {
+      voice(40);
+    } else if (time == 18) {
+      voice(30);
+    } else if (time == 24) {
+      voice(20);
+    } else if (time == 30) {
+      voice(10);
+    } else if (time == 36) {
+      voice(track);
+      return;
     }
-	 if (digitalRead(buttonPin) == HIGH) {
-	 	carma += 0.5;
-		if (carma == 5) {
-		lucky = 1;
-		break;
-		}
-	 }
-    if (i == 600000) {
-		(mode ? voice(50) : voice(150));
-    } else if (i == 1200000) {
-      (mode ? voice(40) : voice(140));
-    } else if (i == 1800000) {
-      (mode ? voice(30) : voice(130));
-    } else if (i == 2400000) {
-      (mode ? voice(20) : voice(120));
-    } else if (i == 3000000) {
-      (mode ? voice(10) : voice(110));
-    }
-  }
-  voice(track);
-  delay(10000);
-  voice(track+4);
+  } while (time <= 36);
+}
+
+int hitry(int time){
+  if (digitalRead(gearconPin) == HIGH) {
+      voice(0);
+      time = 37;
+      }
+    return(time);
 }
 
 void voice(byte track) {
   /*Необходимо написать функцию воспроизведения аудиофайлов*/
-  Serial.print(track);
+  Serial.begin(9600);
+  Serial.println(track);
 }
 
 
