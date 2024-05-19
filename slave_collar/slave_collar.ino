@@ -1,24 +1,21 @@
-//IGT Development production
-//Version-0.9.5
+//IGT Development production by AlexSNAKE
+//Version-1.0a - 19.05.2024
 
-//Необходимые библиотеки
 #include "SoftwareSerial.h"
 #include "DFRobotDFPlayerMini.h"
 
-//Параметры конфигурации PIN
 const byte greenLedPin = 2;
 const byte redLedPin = 3;
 const byte buttonPin = 4;
 const byte gearconPin = 5;
 const byte speakerTxPin = 10;
 const byte speakerRxPin = 11;
-SoftwareSerial softwareSerial(speakerTxPin, speakerRxPin); // Присвоение пинов связи с TX и RX
-
 bool lethalMode;
 bool collarReady;
 unsigned int time;
 byte track;
 byte carma;
+SoftwareSerial softwareSerial(speakerTxPin, speakerRxPin);
 DFRobotDFPlayerMini p;
 
 void setup() {
@@ -137,24 +134,7 @@ bool collarOpenedState() {
   return(digitalRead(gearconPin) == HIGH);
 }
 
-
-//Функция voice возспроизводит требуемый аудиофайл принимая его название как входящий параметр
-void voice(byte track) { //Принимает параметр типа int
-    p.playMp3Folder(track); //Воспроизведение аудиофайла по названию
-    delay(3000); //Задежка для корректного воспроизведения аудиофайла
+void voice(byte track) {
+    p.playMp3Folder(track);
+    delay(3000);
 }
-
-/*
-1 - Оповещении о детонации ошейника;
-2 - Оповещение об открытии замка ошейника;
-3 - Оповещение о включении режима смертника;
-4 - Оповещение о включении режима пленника;
-5 - Инструкция с дальшейшими действиями при детонации;
-6 - Инструкция с дальнейшими действиями при открытии;
-7 - Оповещение об активации ошейника;
-10 - Оповещение об окончении таймера через 10 минут;
-20 - Оповещение об окончении таймера через 20 минут;
-30 - Оповещение об окончении таймера через 30 минут;
-40 - Оповещение об окончении таймера через 40 минут;
-50 - Оповещение об окончении таймера через 50 минут.
-*/

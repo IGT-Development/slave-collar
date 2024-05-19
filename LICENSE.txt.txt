@@ -1,0 +1,31 @@
+EN:
+
+License for Non-Commercial Use of Arduino Code
+
+1. You are free to use this code in non-commercial projects without any restrictions.
+
+2. You agree not to use this code for commercial purposes. If you plan to use it in commercial projects, please seek permission from the code's author.
+
+3. You are responsible for any consequences related to the use of this code.
+
+4. The author retains all rights to this code.
+
+Best regards,
+AlexSNAKE (IGT Development CEO)
+
+___________________________________________________________________________
+
+RU:
+
+Лицензия на использование Arduino-кода в некоммерческих целях
+
+1. Вы можете свободно использовать данный код в некоммерческих проектах без ограничений.
+
+2. Вы обязуетесь не использовать данный код в коммерческих целях. Если вы планируете использовать его в коммерческих проектах, обратитесь к автору кода для получения разрешения.
+
+3. Вы несете ответственность за любые последствия, связанные с использованием этого кода.
+
+4. Автор оставляет за собой все права на данный код.
+
+С уважением,
+AlexSNAKE (IGT Development CEO)
