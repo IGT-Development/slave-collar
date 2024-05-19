@@ -1,126 +1,157 @@
 //IGT Development production
-//Version-0.3.0
+//Version-0.9.5
 
-const int greenLedPin = 2;
-const int redLedPin = 3;
-const int buttonPin = 4;
-const int gearconPin = 5;
-const int speakerPin = 6;
-bool mode = true;
-bool greenLedState = true;
-bool redLedState = false;
-int time = 0;
-bool timeIsOver = false;
-byte track = 0;
-float carma = 0;
+//Необходимые библиотеки
+#include "SoftwareSerial.h"
+#include "DFRobotDFPlayerMini.h"
+
+//Параметры конфигурации PIN
+const byte greenLedPin = 2;
+const byte redLedPin = 3;
+const byte buttonPin = 4;
+const byte gearconPin = 5;
+const byte speakerTxPin = 10;
+const byte speakerRxPin = 11;
+SoftwareSerial softwareSerial(speakerTxPin, speakerRxPin); // Присвоение пинов связи с TX и RX
+
+bool lethalMode;
+bool collarReady;
+unsigned int time;
+byte track;
+byte carma;
+DFRobotDFPlayerMini p;
 
 void setup() {
+	softwareSerial.begin(9600);
+  if (!p.begin(softwareSerial)) {while(true);}
+  p.volume(30);
+
   pinMode(greenLedPin, OUTPUT);
   pinMode(redLedPin, OUTPUT);
-  pinMode(speakerPin, OUTPUT);
   pinMode(buttonPin, INPUT_PULLUP);
   pinMode(gearconPin, INPUT_PULLUP);
 }
 
 void loop() {
-  digitalWrite(redLedPin, HIGH);
-  if ((digitalRead(gearconPin) == LOW) && !timeIsOver) {
-    delay(3000);
-    destiny(mode);
-    timeIsOver = !timeIsOver;
-    time = 0;
-    delay(2000);
+  if (!collarOpenedState() && collarReady) {
+    collarActivation(lethalMode);
   }
-  if (digitalRead(gearconPin) == HIGH ) {
-    if (mode == true) {
-      digitalWrite(greenLedPin, LOW);
-      delay(100);
-      digitalWrite(greenLedPin, HIGH);
-      delay(100);
-    } else if (mode == false) {
-      digitalWrite(redLedPin, LOW);
-      delay(100);
-      digitalWrite(redLedPin, HIGH);
-      delay(100);
-    }
-
-    if (digitalRead(buttonPin) == LOW) {
-      mode = !mode;
-      if (mode){
-        voice(3);
-      } else {
-        voice(2);
-      }
-      delay(1000);
-    }
-    timeIsOver = !timeIsOver;
+  
+  if (collarOpenedState()) {
+    collarReady = true;
+    selectedModeIndication();
+    changeCollarMode();
   }
 }
 
-void destiny(bool lucky) {
-  if (lucky) {
-    track = 1;
-  } else {
-    track = 0;
-  }
-  digitalWrite(greenLedPin, HIGH);
-  digitalWrite(redLedPin, LOW);
-  voice(6);
+void collarActivation(bool monitoringMode) {
+  track = monitoringMode ? 2 : 1;
+  redLedOn();
+  voice(7);
   do {
     delay(1000);
-    time+=1;
-    time = hitry(time);
-    if (digitalRead(buttonPin) == LOW) {
-      carma += 1;
-      if (carma == 5) {
-        voice(1);
-        return;
-        }
-      }
-    if (time == 6) {
-      voice(50);
-    } else if (time == 12) {
-      voice(40);
-    } else if (time == 18) {
-      voice(30);
-    } else if (time == 24) {
-      voice(20);
-    } else if (time == 30) {
-      voice(10);
-    } else if (time == 36) {
+    time += 1;
+    shouldCollarDetonate();
+    goodBoy();
+    checkTimeLeft();
+  } while (time <= 36000);
+  voice(track+4);
+  collarReady = false;
+  time = 0;
+  carma = 0;
+}
+
+void shouldCollarDetonate() {
+  if (collarOpenedState()) {
+    track = 1;
+    voice(track);
+    time = 65535;
+  }
+}
+
+void goodBoy() {
+  if (buttonPressedState()) {
+    carma += 1;
+    if (carma == 5) {
+      track = 2;
       voice(track);
-      return;
+      time = 65535;
     }
-  } while (time <= 36);
+  } else {
+    carma = 0;
+  }
 }
 
-int hitry(int time){
-  if (digitalRead(gearconPin) == HIGH) {
-      voice(0);
-      time = 37;
-      }
-    return(time);
+void checkTimeLeft() {
+      if (time == 600) {
+      voice(50);
+    } else if (time == 1200) {
+      voice(40);
+    } else if (time == 1800) {
+      voice(30);
+    } else if (time == 2400) {
+      voice(20);
+    } else if (time == 3000) {
+      voice(10);
+    } else if (time == 3600) {
+      voice(track);
+    }
 }
 
-void voice(byte track) {
-  /*Необходимо написать функцию воспроизведения аудиофайлов*/
-  Serial.begin(9600);
-  Serial.println(track);
+void selectedModeIndication() {
+  delay(250);
+  (lethalMode) ? redLedOn() : greenLedOn();
+  delay(250);
+  redLedOff();
+  greenLedOff();
 }
 
+void changeCollarMode() {
+      if (buttonPressedState()) {
+      lethalMode = !lethalMode;
+      (lethalMode) ? voice(3) : voice(4);
+    }
+}
+
+void greenLedOn() {
+  digitalWrite(greenLedPin, HIGH);
+}
+
+void greenLedOff() {
+  digitalWrite(greenLedPin, LOW);
+}
+
+void redLedOn() {
+  digitalWrite(redLedPin, HIGH);
+}
+
+void redLedOff() {
+  digitalWrite(redLedPin, LOW);
+}
+
+bool buttonPressedState() {
+  return(digitalRead(buttonPin) == LOW);
+}
+
+bool collarOpenedState() {
+  return(digitalRead(gearconPin) == HIGH);
+}
+
+
+//Функция voice возспроизводит требуемый аудиофайл принимая его название как входящий параметр
+void voice(byte track) { //Принимает параметр типа int
+    p.playMp3Folder(track); //Воспроизведение аудиофайла по названию
+    delay(3000); //Задежка для корректного воспроизведения аудиофайла
+}
 
 /*
-voice(byte track)
-Принимает параметр типа byte (от 0 до 255)
-track - название дорожки которое будет воспроизводиться динамиком
-ниже представлен номер трека и его содержание:
-0 - Оповещении о детонации ошейника;
-1 - Оповещение об открытии замка ошейника;
-2 - Оповещение о включении режима смертника;
-3 - Оповещение о включении режима пленника;
-4 - Инструкция с дальшейшими действиями при детонации;
-5 - Инструкция с дальнейшими действиями при открытии;
-6 - Оповещение об активации ошейника;
+1 - Оповещении о детонации ошейника;
+2 - Оповещение об открытии замка ошейника;
+3 - Оповещение о включении режима смертника;
+4 - Оповещение о включении режима пленника;
+5 - Инструкция с дальшейшими действиями при детонации;
+6 - Инструкция с дальнейшими действиями при открытии;
+7 - Оповещение об активации ошейника;
 10 - Оповещение об окончении таймера через 10 минут;
 20 - Оповещение об окончении таймера через 20 минут;
 30 - Оповещение об окончении таймера через 30 минут;
